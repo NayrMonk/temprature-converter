@@ -1,0 +1,15 @@
+{
+  "name": "temprature-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jet": "^0.9.0-dev.13"
+  }
+}
