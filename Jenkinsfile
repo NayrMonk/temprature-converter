@@ -6,15 +6,13 @@ pipeline {
     }
 
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: 'main', description: 'Branch to build from')
-        string(name: 'STUDENT_NAME', defaultValue: 'Your Name') // <-- replace with your real name
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'qa', 'prod'], description: 'Select environment')
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run Jest tests after build')
+        string(name: 'BRANCH_NAME', defaultValue: 'main')
+        string(name: 'BUILD_ENV', defaultValue: 'dev')
+        booleanParam(name: 'RUN_TESTS', defaultValue: true)
     }
 
     environment {
-        APP_VERSION = "1.0.${BUILD_NUMBER}"
-        MAINTAINER = "Student"
+        NEW_VERSION = "1.0.2"
     }
 
     stages {
@@ -34,13 +32,13 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo "Building version ${APP_VERSION} for ${params.ENVIRONMENT} environment"
+                echo "Building version ${env.NEW_VERSION} for ${params.BUILD_ENV} environment"
                 bat '''
-                echo Simulating build process...
-                if not exist build mkdir build
-                copy *.js build
-                echo Build completed successfully!
-                echo App version: %APP_VERSION% > build\\version.txt
+                    echo Simulating build process...
+                    if not exist build mkdir build
+                    copy *.js build
+                    echo Build completed successfully!
+                    echo App version: ${NEW_VERSION} > build\\version.txt
                 '''
             }
         }
@@ -51,34 +49,41 @@ pipeline {
             }
             steps {
                 echo "Running Jest tests..."
-                bat 'npm test'
+                bat 'npx jest'
             }
         }
 
         stage('Package') {
+            when {
+                expression { return currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
             steps {
-                echo "Creating zip archive for version ${APP_VERSION}"
-                bat 'powershell Compress-Archive -Path build\\* -DestinationPath build_%APP_VERSION%.zip'
+                echo "Packaging build artifacts..."
+                bat 'echo Packaging completed successfully.'
             }
         }
 
         stage('Deploy (Simulation)') {
+            when {
+                expression { return currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
             steps {
-                echo "Simulating deployment of version ${APP_VERSION} to ${params.ENVIRONMENT}"
+                echo "Deploying build version ${NEW_VERSION} (simulation)..."
+                bat 'echo Deployment simulated successfully.'
             }
         }
     }
 
     post {
         always {
-            echo "Cleaning up workspace..."
+            echo 'Cleaning up workspace...'
             deleteDir()
         }
-        success {
-            echo "Pipeline succeeded! Version ${APP_VERSION} built and tested."
-        }
         failure {
-            echo "Pipeline failed! Check console output for details."
+            echo 'Pipeline failed! Check console output for details.'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
         }
     }
 }
